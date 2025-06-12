@@ -1,6 +1,6 @@
 #!/bin/bash
 
-latest_release=$(curl --silent "https://api.github.com/repos/zbronya/v6-proxy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+latest_release=$(curl --silent "https://api.github.com/repos/dnslin/v6-proxy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 supported_os=("linux")
 supported_arch=("amd64" "arm64")
@@ -30,7 +30,7 @@ if [[ ! " ${supported_arch[*]} " =~ " ${arch} " ]]; then
     exit 1
 fi
 
-curl -sOL "https://github.com/zbronya/v6-proxy/releases/download/${latest_release}/v6-proxy-${os}-${arch}"
+curl -sOL "https://github.com/dnslin/v6-proxy/releases/download/${latest_release}/v6-proxy-${os}-${arch}"
 
 chmod +x "v6-proxy-${os}-${arch}"
 

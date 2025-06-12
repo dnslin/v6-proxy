@@ -4,7 +4,7 @@ A random IPv6 proxy service based on Go
 ## Installation
 
 ```bash
-curl -sSL https://github.com/zbronya/v6-proxy/raw/master/install.sh | sudo bash
+curl -sSL https://github.com/dnslin/v6-proxy/raw/master/install.sh | sudo bash
 ```
 
 ## Usage
