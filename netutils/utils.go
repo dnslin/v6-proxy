@@ -35,29 +35,26 @@ func RandomV6(network string) (net.IP, error) {
 
 	// Make sure we're dealing with an IPv6 network
 	if subnet.IP.To4() != nil {
-		return nil, errors.New("expected an IPv6 network")
+		return nil, errors.New("expected an IPv6 network, but got an IPv4 network")
 	}
 
-	// Create a new IP address buffer and copy the network prefix
-	ip := make(net.IP, len(subnet.IP))
-	copy(ip, subnet.IP)
-
-	// Generate random bytes for the host part of the address
-	hostBytes := make([]byte, len(ip)-len(subnet.Mask))
-	_, err = rand.Read(hostBytes)
+	// Generate 16 random bytes for a full IPv6 address
+	randomBytes := make([]byte, 16)
+	_, err = rand.Read(randomBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	// Apply the random bytes to the host part of the IP address, respecting the subnet mask
-	for i, b := range hostBytes {
-		ip[len(subnet.Mask)+i] = b
+	// Create a new IP address by combining the network prefix with the random host part.
+	randomIP := make(net.IP, 16)
+	for i := 0; i < 16; i++ {
+		// Keep the network prefix part
+		prefixPart := subnet.IP[i] & subnet.Mask[i]
+		// Get the host part from the random bytes
+		hostPart := randomBytes[i] & ^subnet.Mask[i]
+		// Combine into the new IP byte
+		randomIP[i] = prefixPart | hostPart
 	}
 
-	// Apply the mask to ensure the network part remains unchanged
-	for i := 0; i < len(ip); i++ {
-		ip[i] = ip[i] | ^subnet.Mask[i]
-	}
-
-	return ip, nil
+	return randomIP, nil
 }
