@@ -2,19 +2,23 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+
 	"github.com/zbronya/v6-proxy/config"
 	"github.com/zbronya/v6-proxy/proxy"
 	"github.com/zbronya/v6-proxy/sysutils"
-	"log"
-	"net/http"
-	"os"
 )
 
 func main() {
-	log.SetOutput(os.Stdout)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	cfg := config.ParseFlags()
 	if cfg.CIDR == "" {
-		log.Fatal("cidr is required")
+		slog.Error("cidr is required")
+		os.Exit(1)
 	}
 
 	if cfg.AutoForwarding {
@@ -31,11 +35,12 @@ func main() {
 
 	p := proxy.NewProxyServer(cfg)
 
-	log.Printf("Starting server on  %s:%d", cfg.Bind, cfg.Port)
-	err := http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Bind, cfg.Port), p)
+	addr := fmt.Sprintf("%s:%d", cfg.Bind, cfg.Port)
+	slog.Info("Starting server", "address", addr)
+	err := http.ListenAndServe(addr, p)
 
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to start server", "error", err)
+		os.Exit(1)
 	}
-
 }

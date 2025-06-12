@@ -1,10 +1,9 @@
 package netutils
 
 import (
+	"crypto/rand"
 	"errors"
-	"math/rand"
 	"net"
-	"time"
 )
 
 func GetIPAddress(domain string) (string, bool, error) {
@@ -34,19 +33,31 @@ func RandomV6(network string) (net.IP, error) {
 		return nil, err
 	}
 
-	ones, bits := subnet.Mask.Size()
-	if bits != 128 {
+	// Make sure we're dealing with an IPv6 network
+	if subnet.IP.To4() != nil {
 		return nil, errors.New("expected an IPv6 network")
 	}
 
-	prefix := subnet.IP.To16()
+	// Create a new IP address buffer and copy the network prefix
+	ip := make(net.IP, len(subnet.IP))
+	copy(ip, subnet.IP)
 
-	rand.Seed(time.Now().UnixNano())
-	for i := ones; i < bits; i++ {
-		byteIndex := i / 8
-		bitIndex := uint(i % 8)
-		prefix[byteIndex] |= byte(rand.Intn(2)) << (7 - bitIndex)
+	// Generate random bytes for the host part of the address
+	hostBytes := make([]byte, len(ip)-len(subnet.Mask))
+	_, err = rand.Read(hostBytes)
+	if err != nil {
+		return nil, err
 	}
 
-	return prefix, nil
+	// Apply the random bytes to the host part of the IP address, respecting the subnet mask
+	for i, b := range hostBytes {
+		ip[len(subnet.Mask)+i] = b
+	}
+
+	// Apply the mask to ensure the network part remains unchanged
+	for i := 0; i < len(ip); i++ {
+		ip[i] = ip[i] | ^subnet.Mask[i]
+	}
+
+	return ip, nil
 }
